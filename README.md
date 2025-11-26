@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Wizard's Escape — Ruined Garden</title>
+<style>
+  body {
+    background: linear-gradient(135deg, #0d0f12, #1a1f25);
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #cbd5e1;
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  .container {
+    max-width: 800px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  h1 {
+    color: #9ec4ff;
+    text-shadow: 0 0 10px rgba(158, 196, 255, 0.5);
+    margin-bottom: 5px;
+    font-size: 2.5rem;
+  }
+  
+  .subtitle {
+    color: #52eca4;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+  }
+  
+  #canvas {
+    image-rendering: pixelated;
+    border: 2px solid #1f2937;
+    background: #0a0e14;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    margin: 10px auto;
+    border-radius: 4px;
+    outline: none; /* Remove focus outline if desired */
+  }
+  
+  #game-info {
+    display: flex;
+    justify-content: space-between;
+    width: 768px;
+    margin: 10px auto;
+    padding: 10px;
+    background: rgba(15, 25, 35, 0.7);
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
+  
+  .info-box {
+    text-align: left;
+    padding: 10px;
+    background: rgba(10, 20, 30, 0.6);
+    border-radius: 6px;
+    flex: 1;
+    margin: 0 5px;
+  }
+  
+  .info-box h3 {
+    margin-top: 0;
+    color: #9ec4ff;
+    border-bottom: 1px solid #1f2937;
+    padding-bottom: 5px;
+  }
+  
+  #msg {
+    margin-top: 8px;
+    font-weight: bold;
+    color: #9ec4ff;
+    font-size: 1.2rem;
+    min-height: 24px;
+  }
+  
+  #controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 15px 0;
+  }
+  
+  button {
+    background: linear-gradient(to bottom, #2c3e50, #1a2530);
+    color: #cbd5e1;
+    border: 1px solid #3a506b;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  }
+  
+  button:hover {
+    background: linear-gradient(to bottom, #3a506b, #23354a);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+  }
+  
+  button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  #instructions {
+    background: rgba(15, 25, 35, 0.7);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    text-align: left;
+    max-width: 768px;
+  }
+  
+  #instructions h3 {
+    color: #52eca4;
+    margin-top: 0;
+  }
+  
+  #instructions ul {
+    padding-left: 20px;
+  }
+  
+  #instructions li {
+    margin-bottom: 8px;
+  }
+  
+  .key {
+    display: inline-block;
+    background: #1a2530;
+    border: 1px solid #3a506b;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+  
+  .health-bar {
+    height: 20px;
+    background: #333;
+    border-radius: 10px;
+    margin-top: 5px;
+    overflow: hidden;
+    border: 1px solid #444;
+  }
+  
+  .health-fill {
+    height: 100%;
+    background: linear-gradient(to right, #ff416c, #ff4b2b);
+    border-radius: 10px;
+    transition: width 0.3s;
+  }
+  
+  .mana-bar {
+    height: 10px;
+    background: #333;
+    border-radius: 5px;
+    margin-top: 5px;
+    overflow: hidden;
+    border: 1px solid #444;
+  }
+  
+  .mana-fill {
+    height: 100%;
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    border-radius: 5px;
+    transition: width 0.3s;
+  }
+  
+  .spell-btn {
+    background: linear-gradient(to bottom, #4a6fa5, #2c3e50);
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    margin-top: 10px;
+  }
+  
+  .spell-btn:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+  }
+  
+  .collectible {
+    display: inline-block;
+    margin: 0 5px;
+    font-size: 1.2rem;
+  }
+  
+  @media (max-width: 800px) {
+    #game-info {
+      flex-direction: column;
+      width: 100%;
+    }
+    
+    .info-box {
+      margin-bottom: 10px;
+    }
+    
+    #canvas {
+      width: 95%;
+      height: auto;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🧙‍♂️ Wizard's Escape</h1>
+  <div class="subtitle">Ruined Garden</div>
+  
+  <div id="game-info">
+    <div class="info-box">
+      <h3>Player Status</h3>
+      <div>Health: <span id="health-value">6</span>/6</div>
+      <div class="health-bar">
+        <div class="health-fill" id="health-bar" style="width: 100%"></div>
+      </div>
+      <div>Mana: <span id="mana-value">10</span>/10</div>
+      <div class="mana-bar">
+        <div class="mana-fill" id="mana-bar" style="width: 100%"></div>
+      </div>
+      <button class="spell-btn" id="fireball-btn" disabled>🔥 Fireball (3 Mana)</button>
+    </div>
+    
+    <div class="info-box">
+      <h3>Game Info</h3>
+      <div>Level: <span id="level">1</span></div>
+      <div>Keys: <span id="keys">0</span>/3</div>
+      <div>Enemies: <span id="enemies">10</span></div>
+      <div>Exit: <span id="exit-status">Locked</span></div>
+    </div>
+  </div>
+  
+  <canvas id="canvas" width="768" height="576" tabindex="0"></canvas>
+  
+  <div id="msg">Find the keys to unlock the exit!</div>
+  
+  <div id="controls">
+    <button id="restart-btn">Restart Game</button>
+    <button id="next-level-btn" style="display:none;">Next Level</button>
+  </div>
+  
+  <div id="instructions">
+    <h3>How to Play</h3>
+    <ul>
+      <li>Move with <span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> or Arrow Keys</li>
+      <li>Collect all <span class="collectible">🗝️</span> keys to unlock the exit <span class="collectible">🚪</span></li>
+      <li>Avoid or defeat skeletons <span class="collectible">💀</span> (they damage you on contact)</li>
+      <li>Use <span class="key">SPACE</span> to cast Fireball spell (costs 3 mana)</li>
+      <li>Collect <span class="collectible">⭐</span> mana orbs to restore mana</li>
+      <li>Collect <span class="collectible">❤️</span> health potions to restore health</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+(() => {
+  const TILE=16, GRID_W=48, GRID_H=36;
+  const WALL=1, FLOOR=0;
+  const canvas=document.getElementById("canvas");
+  const ctx=canvas.getContext("2d");
+  let grid=[], player={}, skeletons=[], exitPos={}, keys=new Set();
+  let gameOver=false, victory=false, level=1, playerKeys=0, totalKeys=3;
+  let mana=10, maxMana=10, health=6, maxHealth=6;
+  let manaOrbs=[], healthPotions=[], keyItems=[];
+  let fireballCooldown = 0;
+  let fireballs = [];
+  let lastDirection = {dx: 0, dy: 1}; // Default down
+  let particles = [];
+
+  // 1. Prevent default scrolling for game keys
+  window.addEventListener("keydown", (e) => {
+    // Keys you want to capture for the game
+    const blocked = [" ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"];
+    if (blocked.includes(e.key)) {
+      e.preventDefault(); // stops page scroll
+    }
+  });
+
+  function rnd(){return Math.random();}
+  
+  function genMaze(){
+    grid=Array.from({length:GRID_H},()=>Array(GRID_W).fill(WALL));
+    
+    // Create a more structured maze with paths
+    for(let y=1;y<GRID_H-1;y++){
+      for(let x=1;x<GRID_W-1;x++){
+        if((x % 4 === 0 || y % 4 === 0) && rnd() < 0.7) {
+          grid[y][x] = FLOOR;
+        } else if(rnd() < 0.3) {
+          grid[y][x] = FLOOR;
+        }
+      }
+    }
+    
+    // Ensure player start area is clear
+    for(let y=1; y<=3; y++) {
+      for(let x=1; x<=3; x++) {
+        grid[y][x] = FLOOR;
+      }
+    }
+    
+    player={x:TILE*2,y:TILE*2,hp:health, maxHp: maxHealth};
+    exitPos={x:GRID_W-3,y:GRID_H-3};
+    
+    // Place skeletons
+    skeletons=[];
+    for(let i=0;i<5+level;i++){
+      let placed = false;
+      while(!placed) {
+        const x = Math.floor(Math.random() * (GRID_W-6)) + 3;
+        const y = Math.floor(Math.random() * (GRID_H-6)) + 3;
+        if(grid[y][x] === FLOOR && 
+           Math.abs(x*TILE - player.x) > TILE*5 && 
+           Math.abs(y*TILE - player.y) > TILE*5) {
+          skeletons.push({x:x*TILE+TILE/2,y:y*TILE+TILE/2,hp:2, id:i});
+          placed = true;
+        }
+      }
+    }
+    
+    // Place keys
+    keyItems = [];
+    for(let i=0; i<totalKeys; i++) {
+      let placed = false;
+      while(!placed) {
+        const x = Math.floor(Math.random() * (GRID_W-4)) + 2;
+        const y = Math.floor(Math.random() * (GRID_H-4)) + 2;
+        if(grid[y][x] === FLOOR && 
+           Math.abs(x*TILE - player.x) > TILE*3 && 
+           Math.abs(y*TILE - player.y) > TILE*3) {
+          keyItems.push({x:x*TILE+TILE/2, y:y*TILE+TILE/2, collected: false});
+          placed = true;
+        }
+      }
+    }
+    
+    // Place mana orbs
+    manaOrbs = [];
+    for(let i=0; i<8; i++) {
+      let placed = false;
+      while(!placed) {
+        const x = Math.floor(Math.random() * (GRID_W-4)) + 2;
+        const y = Math.floor(Math.random() * (GRID_H-4)) + 2;
+        if(grid[y][x] === FLOOR) {
+          manaOrbs.push({x:x*TILE+TILE/2, y:y*TILE+TILE/2, collected: false});
+          placed = true;
+        }
+      }
+    }
+    
+    // Place health potions
+    healthPotions = [];
+    for(let i=0; i<3; i++) {
+      let placed = false;
+      while(!placed) {
+        const x = Math.floor(Math.random() * (GRID_W-4)) + 2;
+        const y = Math.floor(Math.random() * (GRID_H-4)) + 2;
+        if(grid[y][x] === FLOOR) {
+          healthPotions.push({x:x*TILE+TILE/2, y:y*TILE+TILE/2, collected: false});
+          placed = true;
+        }
+      }
+    }
+    
+    gameOver=false; 
+    victory=false;
+    playerKeys = 0;
+    mana = maxMana;
+    fireballs = [];
+    particles = [];
+    document.getElementById("msg").textContent="Find the keys to unlock the exit!";
+    updateUI();
+    
+    // 2. Lock focus to the canvas
+    canvas.focus(); // lock keyboard input to canvas
+  }
+  
+  function updateUI() {
+    document.getElementById("health-value").textContent = player.hp;
+    document.getElementById("mana-value").textContent = mana;
+    document.getElementById("level").textContent = level;
+    document.getElementById("keys").textContent = playerKeys;
+    document.getElementById("enemies").textContent = skeletons.filter(s => s.hp > 0).length;
+    document.getElementById("exit-status").textContent = playerKeys >= totalKeys ? "Unlocked!" : "Locked";
+    document.getElementById("health-bar").style.width = (player.hp / player.maxHp * 100) + "%";
+    document.getElementById("mana-bar").style.width = (mana / maxMana * 100) + "%";
+    
+    const fireballBtn = document.getElementById("fireball-btn");
+    fireballBtn.disabled = mana < 3 || gameOver || victory;
+  }
+  
+  genMaze();
+
+  window.addEventListener("keydown",e=>{
+    keys.add(e.key);
+    
+    // Fireball spell
+    if(e.key === " " && mana >= 3 && !gameOver && !victory) {
+      mana -= 3;
+      fireballs.push({
+        x: player.x,
+        y: player.y,
+        dx: lastDirection.dx,
+        dy: lastDirection.dy,
+        speed: 8,
+        active: true,
+        life: 30
+      });
+      
+      updateUI();
+    }
+  });
+  
+  window.addEventListener("keyup",e=>{
+    keys.delete(e.key);
+  });
+
+  function passable(px,py){
+    const gx=Math.floor(px/TILE), gy=Math.floor(py/TILE);
+    if(gx<0||gy<0||gx>=GRID_W||gy>=GRID_H) return false;
+    return grid[gy][gx]===FLOOR;
+  }
+
+  function update(){
+    if(gameOver||victory) return;
+    
+    let dx=0,dy=0;
+    if(keys.has("ArrowLeft")||keys.has("a")) dx=-2;
+    if(keys.has("ArrowRight")||keys.has("d")) dx=2;
+    if(keys.has("ArrowUp")||keys.has("w")) dy=-2;
+    if(keys.has("ArrowDown")||keys.has("s")) dy=2;
+    
+    if(dx !== 0 || dy !== 0) {
+      if(passable(player.x+dx,player.y+dy)){
+        player.x+=dx;
+        player.y+=dy;
+        // Update last movement direction
+        if(dx !== 0) lastDirection = {dx: Math.sign(dx), dy: 0};
+        if(dy !== 0) lastDirection = {dx: 0, dy: Math.sign(dy)};
+      }
+    }
+    
+    // Update fireballs
+    for(let i=0; i<fireballs.length; i++) {
+      const f = fireballs[i];
+      if(!f.active) continue;
+      
+      f.x += f.dx * f.speed;
+      f.y += f.dy * f.speed;
+      f.life--;
+      
+      // Check collision with walls
+      const gx = Math.floor(f.x/TILE);
+      const gy = Math.floor(f.y/TILE);
+      if(gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H || grid[gy][gx] === WALL) {
+        createExplosion(f.x, f.y, "#ff8c00");
+        f.active = false;
+        continue;
+      }
+      
+      // Check collision with skeletons
+      for(const s of skeletons) {
+        if(s.hp <= 0) continue;
+        const dist = Math.sqrt(Math.pow(f.x - s.x, 2) + Math.pow(f.y - s.y, 2));
+        if(dist < 16) {
+          s.hp = 0;
+          createExplosion(s.x, s.y, "#ff4500");
+          f.active = false;
+          break;
+        }
+      }
+      
+      if(f.life <= 0) {
+        createExplosion(f.x, f.y, "#ff8c00");
+        f.active = false;
+      }
+    }
+    
+    // Remove inactive fireballs
+    fireballs = fireballs.filter(f => f.active);
+    
+    // Update particles
+    for(let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.dx;
+      p.y += p.dy;
+      p.life--;
+      p.dy += 0.1; // Gravity
+      
+      if(p.life <= 0) {
+        particles.splice(i, 1);
+      }
+    }
+    
+    // Skeleton AI
+    for(const s of skeletons){
+      if(s.hp<=0) continue;
+      
+      // Simple pathfinding towards player
+      const dirx = Math.sign(player.x - s.x);
+      const diry = Math.sign(player.y - s.y);
+      
+      // Move in x or y direction (randomly choose if both are options)
+      if(Math.abs(dirx) > Math.abs(diry) && dirx !== 0) {
+        if(passable(s.x + dirx*2, s.y)) {
+          s.x += dirx*2;
+        } else if(passable(s.x, s.y + Math.sign(diry)*2)) {
+          s.y += Math.sign(diry)*2;
+        }
+      } else if(diry !== 0) {
+        if(passable(s.x, s.y + diry*2)) {
+          s.y += diry*2;
+        } else if(passable(s.x + Math.sign(dirx)*2, s.y)) {
+          s.x += Math.sign(dirx)*2;
+        }
+      }
+      
+      // Check collision with player
+      const dist = Math.sqrt(Math.pow(player.x - s.x, 2) + Math.pow(player.y - s.y, 2));
+      if(dist < 16){
+        player.hp--;
+        createExplosion(player.x, player.y, "#ff0000");
+        updateUI();
+        if(player.hp<=0){
+          gameOver=true;
+          document.getElementById("msg").textContent="💀 You were defeated by skeletons!";
+        }
+      }
+    }
+    
+    // Check key collection
+    for(const key of keyItems) {
+      if(key.collected) continue;
+      const dist = Math.sqrt(Math.pow(player.x - key.x, 2) + Math.pow(player.y - key.y, 2));
+      if(dist < 16) {
+        key.collected = true;
+        playerKeys++;
+        createExplosion(key.x, key.y, "#ffd700");
+        updateUI();
+        if(playerKeys >= totalKeys) {
+          document.getElementById("msg").textContent="🗝️ All keys collected! Exit unlocked!";
+        }
+      }
+    }
+    
+    // Check mana orb collection
+    for(const orb of manaOrbs) {
+      if(orb.collected) continue;
+      const dist = Math.sqrt(Math.pow(player.x - orb.x, 2) + Math.pow(player.y - orb.y, 2));
+      if(dist < 16) {
+        orb.collected = true;
+        mana = Math.min(mana + 2, maxMana);
+        createExplosion(orb.x, orb.y, "#4facfe");
+        updateUI();
+      }
+    }
+    
+    // Check health potion collection
+    for(const potion of healthPotions) {
+      if(potion.collected) continue;
+      const dist = Math.sqrt(Math.pow(player.x - potion.x, 2) + Math.pow(player.y - potion.y, 2));
+      if(dist < 16) {
+        potion.collected = true;
+        player.hp = Math.min(player.hp + 2, player.maxHp);
+        createExplosion(potion.x, potion.y, "#ff6b6b");
+        updateUI();
+      }
+    }
+    
+    // Check exit
+    if(playerKeys >= totalKeys) {
+      const dist = Math.sqrt(Math.pow(player.x - (exitPos.x*TILE+TILE/2), 2) + 
+                             Math.pow(player.y - (exitPos.y*TILE+TILE/2), 2));
+      if(dist < 24){
+        victory=true;
+        document.getElementById("msg").textContent="🚪 You escaped the garden!";
+        document.getElementById("next-level-btn").style.display = "inline-block";
+      }
+    }
+    
+    // Regenerate mana slowly
+    if(!gameOver && !victory && Math.random() < 0.02) {
+      if(mana < maxMana) {
+        mana = Math.min(mana + 0.1, maxMana);
+        updateUI();
+      }
+    }
+  }
+
+  function createExplosion(x, y, color) {
+    for(let i = 0; i < 8; i++) {
+      particles.push({
+        x: x,
+        y: y,
+        dx: (Math.random() - 0.5) * 4,
+        dy: (Math.random() - 0.5) * 4,
+        life: 20,
+        color: color
+      });
+    }
+  }
+
+  function draw(){
+    ctx.fillStyle="#081018"; 
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    
+    // Draw grid background
+    for(let y=0;y<GRID_H;y++){
+      for(let x=0;x<GRID_W;x++){
+        const px=x*TILE, py=y*TILE;
+        if(grid[y][x]===WALL){
+          ctx.fillStyle="#141a22"; 
+          ctx.fillRect(px,py,TILE,TILE);
+          
+          // Wall pattern
+          ctx.fillStyle="#1f2937";
+          ctx.fillRect(px+2, py+2, TILE-4, TILE-4);
+          
+          // Glow effect
+          ctx.fillStyle="rgba(80,120,160,0.1)";
+          ctx.beginPath(); 
+          ctx.arc(px+TILE/2,py+TILE/2,TILE/1.5,0,Math.PI*2); 
+          ctx.fill();
+        } else {
+          // Floor pattern
+          ctx.fillStyle="#0f1a22"; 
+          ctx.fillRect(px,py,TILE,TILE);
+          
+          // Floor detail
+          if((x+y) % 2 === 0) {
+            ctx.fillStyle="#0d171e";
+            ctx.fillRect(px,py,TILE,TILE);
+          }
+        }
+      }
+    }
+    
+    // Draw key items
+    for(const key of keyItems) {
+      if(key.collected) continue;
+      ctx.font="20px serif"; 
+      ctx.textAlign="center"; 
+      ctx.textBaseline="middle";
+      ctx.fillText("🗝️", key.x, key.y);
+    }
+    
+    // Draw mana orbs
+    for(const orb of manaOrbs) {
+      if(orb.collected) continue;
+      ctx.font="18px serif"; 
+      ctx.textAlign="center"; 
+      ctx.textBaseline="middle";
+      ctx.fillText("⭐", orb.x, orb.y);
+    }
+    
+    // Draw health potions
+    for(const potion of healthPotions) {
+      if(potion.collected) continue;
+      ctx.font="18px serif"; 
+      ctx.textAlign="center"; 
+      ctx.textBaseline="middle";
+      ctx.fillText("❤️", potion.x, potion.y);
+    }
+    
+    // Draw exit
+    const ex=exitPos.x*TILE+TILE/2, ey=exitPos.y*TILE+TILE/2;
+    if(playerKeys >= totalKeys) {
+      // Unlocked exit
+      ctx.fillStyle="rgba(82,236,164,0.6)";
+      ctx.beginPath(); 
+      ctx.arc(ex,ey,20,0,Math.PI*2); 
+      ctx.fill();
+      ctx.fillStyle="#52eca4"; 
+      ctx.fillRect(exitPos.x*TILE+2,exitPos.y*TILE+2,TILE-4,TILE-4);
+      ctx.font="24px serif"; 
+      ctx.textAlign="center"; 
+      ctx.textBaseline="middle";
+      ctx.fillText("🚪", ex, ey);
+    } else {
+      // Locked exit
+      ctx.fillStyle="rgba(200,50,50,0.6)";
+      ctx.beginPath(); 
+      ctx.arc(ex,ey,20,0,Math.PI*2); 
+      ctx.fill();
+      ctx.fillStyle="#c83232"; 
+      ctx.fillRect(exitPos.x*TILE+2,exitPos.y*TILE+2,TILE-4,TILE-4);
+      ctx.font="24px serif"; 
+      ctx.textAlign="center"; 
+      ctx.textBaseline="middle";
+      ctx.fillText("🔒", ex, ey);
+    }
+
+    // Draw fireballs
+    for(const f of fireballs) {
+      if(!f.active) continue;
+      ctx.fillStyle="#ff8c00";
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, 6, 0, Math.PI*2);
+      ctx.fill();
+      
+      ctx.fillStyle="#ffff00";
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, 3, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Draw particles
+    for(const p of particles) {
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life / 20;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Draw wizard aura
+    const grad=ctx.createRadialGradient(player.x,player.y,10,player.x,player.y,80);
+    grad.addColorStop(0,"rgba(255,255,200,0.3)");
+    grad.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle=grad;
+    ctx.beginPath(); 
+    ctx.arc(player.x,player.y,80,0,Math.PI*2); 
+    ctx.fill();
+
+    // Draw wizard
+    ctx.font="24px serif"; 
+    ctx.textAlign="center"; 
+    ctx.textBaseline="middle";
+    ctx.fillText("🧙‍♂️",player.x,player.y);
+
+    // Draw skeletons
+    for(const s of skeletons){
+      if(s.hp<=0) continue;
+      ctx.font="20px serif"; 
+      ctx.textAlign="center"; 
+      ctx.textBaseline="middle";
+      ctx.fillText("💀",s.x,s.y);
+    }
+  }
+
+  function loop(){
+    update(); 
+    draw();
+    requestAnimationFrame(loop);
+  }
+  
+  // Button event listeners
+  document.getElementById("restart-btn").addEventListener("click", () => {
+    level = 1;
+    health = 6;
+    maxHealth = 6;
+    mana = 10;
+    maxMana = 10;
+    genMaze();
+    document.getElementById("next-level-btn").style.display = "none";
+  });
+  
+  document.getElementById("next-level-btn").addEventListener("click", () => {
+    level++;
+    health = Math.min(health + 1, maxHealth + 1);
+    maxHealth = health;
+    mana = maxMana;
+    genMaze();
+    document.getElementById("next-level-btn").style.display = "none";
+  });
+  
+  loop();
+})();
+</script>
+</body>
+</html>
